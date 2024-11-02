@@ -1,13 +1,21 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { User } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { UserDTO } from './dto/user.dto';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    private jwtService: JwtService,
+  ) {}
 
   async create(createUserDto: UserDTO, refreshToken: string): Promise<UserDTO> {
     const userExists = await this.findByUsername(createUserDto.username);
@@ -37,5 +45,19 @@ export class UsersService {
 
   async remove(id: string): Promise<UserDTO> {
     return this.userModel.findByIdAndDelete(id).exec();
+  }
+
+  async updateUser(newData: UserDTO, refreshToken: string) {
+    const username = await this.jwtService.decode(refreshToken);
+    const userExists = await this.findByUsername(username);
+
+    if (!userExists) throw new NotFoundException('User not found');
+
+    await this.userModel.updateOne(
+      { _id: userExists._id },
+      { ...newData, refreshToken },
+    );
+
+    return newData;
   }
 }

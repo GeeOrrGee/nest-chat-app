@@ -37,6 +37,12 @@ export class AuthService {
     return tokens;
   }
 
+  async validateToken(token: string) {
+    try {
+      await this.jwtService.verifyAsync(token, {});
+    } catch {}
+  }
+
   async generateTokens(userData: UserDTO) {
     const accessToken = await this.jwtService.signAsync(userData, {
       expiresIn: '5m',
