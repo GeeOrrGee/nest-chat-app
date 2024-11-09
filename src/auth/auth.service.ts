@@ -50,13 +50,19 @@ export class AuthService {
     }
   }
 
-  async generateTokens(userData: UserDTO) {
-    const accessToken = await this.jwtService.signAsync(userData, {
-      expiresIn: '5m',
-    });
-    const refreshToken = await this.jwtService.signAsync(userData, {
-      expiresIn: '7d',
-    });
+  async generateTokens(payload: object) {
+    const accessToken = await this.jwtService.signAsync(
+      { ...payload, expiresAt: Date.now() + 1000 * 60 * 5 },
+      {
+        expiresIn: '5m',
+      },
+    );
+    const refreshToken = await this.jwtService.signAsync(
+      { ...payload, expiresAt: Date.now() + 1000 * 60 * 60 * 60 * 7 },
+      {
+        expiresIn: '7d',
+      },
+    );
 
     return { accessToken, refreshToken };
   }
