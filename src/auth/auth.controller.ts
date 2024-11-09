@@ -8,12 +8,14 @@ import {
   Req,
   UnauthorizedException,
   ForbiddenException,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDTO } from 'src/users/dto/user.dto';
 import { Request, Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
+import { AuthGuard } from './auth.guard';
 
 const tokenConfig = {
   httpOnly: true,
@@ -30,21 +32,28 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   signIn(@Body() signInDto: Record<string, any>) {
-    const parsedObj = JSON.parse(Object.keys(signInDto)[0]);
-    return this.authService.signIn(parsedObj.username, parsedObj.password);
+    return this.authService.signIn(signInDto.username, signInDto.password);
   }
 
   @HttpCode(HttpStatus.CREATED)
   @Post('register')
   async registerUser(@Body() userData: UserDTO, @Res() res: Response) {
-    const parsedObj = JSON.parse(Object.keys(userData)[0]); //TODO parse data appropriately
     const { accessToken, refreshToken } =
-      await this.authService.signUp(parsedObj);
+      await this.authService.signUp(userData);
 
     res.cookie('accessToken', accessToken, tokenConfig);
     res.cookie('refreshToken', refreshToken, tokenConfig);
 
     return res.send();
+  }
+
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('/logout')
+  async logout(@Req() req: Request) {
+    const { refreshToken } = req.cookies;
+
+    await this.authService.signOut(refreshToken);
   }
 
   @Post('refresh-token')
@@ -70,7 +79,7 @@ export class AuthController {
       const { accessToken, refreshToken } =
         await this.authService.generateTokens(payload);
 
-      await this.usersService.updateUser(payload, refreshToken); //update refresh token
+      await this.usersService.updateUser({ refreshToken }); //update user with refresh token
 
       res.cookie('accessToken', accessToken, tokenConfig);
       res.cookie('refreshToken', refreshToken, tokenConfig);

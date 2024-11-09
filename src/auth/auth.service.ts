@@ -23,10 +23,10 @@ export class AuthService {
     }
 
     /**
-     *  4- add refresh token endpoint
      *  5- Prepare for session ID
      */
     delete user.password;
+    delete user.refreshToken;
     const tokens = this.generateTokens(user);
     return tokens;
   }
@@ -37,10 +37,17 @@ export class AuthService {
     return tokens;
   }
 
+  async signOut(refreshToken: string) {
+    await this.validateToken(refreshToken);
+    await this.usersService.updateUser({ refreshToken: undefined });
+  }
+
   async validateToken(token: string) {
     try {
       await this.jwtService.verifyAsync(token, {});
-    } catch {}
+    } catch {
+      throw new UnauthorizedException('Token is invalid');
+    }
   }
 
   async generateTokens(userData: UserDTO) {

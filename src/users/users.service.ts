@@ -40,23 +40,23 @@ export class UsersService {
   }
 
   async findByUsername(username: string): Promise<UserDTO> {
-    return (await this.userModel.findOne({ username }).exec()).toObject();
+    return (await this.userModel.findOne({ username }).exec())?.toObject();
   }
 
   async remove(id: string): Promise<UserDTO> {
     return this.userModel.findByIdAndDelete(id).exec();
   }
 
-  async updateUser(newData: UserDTO, refreshToken: string) {
-    const username = await this.jwtService.decode(refreshToken);
-    const userExists = await this.findByUsername(username);
+  async findByRefresh(refreshToken: string): Promise<UserDTO> {
+    return (await this.userModel.findOne({ refreshToken }).exec())?.toObject();
+  }
+
+  async updateUser(newData: Partial<UserDTO>) {
+    const userExists = await this.findById(newData._id);
 
     if (!userExists) throw new NotFoundException('User not found');
 
-    await this.userModel.updateOne(
-      { _id: userExists._id },
-      { ...newData, refreshToken },
-    );
+    await this.userModel.updateOne({ _id: userExists._id }, newData);
 
     return newData;
   }
