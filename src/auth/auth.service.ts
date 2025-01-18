@@ -31,10 +31,13 @@ export class AuthService {
     return tokens;
   }
 
-  async signUp(userData: UserDTO) {
+  async signUp({ password, ...userData }: UserDTO) {
     const tokens = await this.generateTokens(userData);
-    await this.usersService.create(userData, tokens.refreshToken);
-    return tokens;
+    await this.usersService.create(
+      { password, ...userData },
+      tokens.refreshToken,
+    );
+    return { ...tokens, userData };
   }
 
   async signOut(refreshToken: string) {

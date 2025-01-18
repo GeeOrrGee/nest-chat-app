@@ -38,13 +38,16 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @Post('register')
   async registerUser(@Body() userData: UserDTO, @Res() res: Response) {
-    const { accessToken, refreshToken } =
-      await this.authService.signUp(userData);
+    const {
+      accessToken,
+      refreshToken,
+      userData: data,
+    } = await this.authService.signUp(userData);
 
     res.cookie('accessToken', accessToken, tokenConfig);
     res.cookie('refreshToken', refreshToken, tokenConfig);
 
-    return res.send();
+    return res.send(data);
   }
 
   @UseGuards(AuthGuard)
