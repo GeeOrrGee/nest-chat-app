@@ -5,4 +5,5 @@ export type UserDTO = {
   password: string;
   _id: Types.ObjectId;
   refreshToken: string;
+  conversations: Types.ObjectId[];
 };

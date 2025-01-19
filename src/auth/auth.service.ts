@@ -27,7 +27,7 @@ export class AuthService {
      */
     delete user.password;
     delete user.refreshToken;
-    const tokens = this.generateTokens(user);
+    const tokens = await this.generateTokens(user);
     return tokens;
   }
 
@@ -37,7 +37,7 @@ export class AuthService {
       { password, ...userData },
       tokens.refreshToken,
     );
-    return { ...tokens, userData };
+    return { ...tokens };
   }
 
   async signOut(refreshToken: string) {

@@ -5,6 +5,7 @@ import { Conversation } from './models/conversation.model';
 import { Message } from './models/message.model';
 import { conversationConstants } from 'src/constants';
 import { ConversationDTO } from './dto/conversation.dto';
+import { MessageDTO } from './dto/message.dto';
 
 @Injectable()
 export class ConversationsService {
@@ -21,24 +22,36 @@ export class ConversationsService {
     return this.messageModel.findById(convId).exec();
   }
 
-  async createConversation(data: ConversationDTO): Promise<Conversation> {
-    const newConversation = new this.conversationModel(data);
+  async createConversation(
+    participants: string[],
+    data: Partial<ConversationDTO>,
+  ): Promise<Conversation> {
+    const defaultValue = {
+      title: 'New Conversation',
+      recentMsgs: [],
+      ...data,
+    };
+    const newConversation = new this.conversationModel(defaultValue);
     return newConversation.save();
   }
 
   async addMessage(
     conversationId: string,
-    messageData: Message,
+    messageData: MessageDTO,
   ): Promise<Message> {
     const conversation = await this.findConvById(conversationId);
     const newMessage = new this.messageModel(messageData);
-    if (
+
+    const limitExceeded =
       conversation.recentMsgs.length >=
-      conversationConstants.recentMessagesLimit
-    ) {
+      conversationConstants.recentMessagesLimit;
+
+    if (limitExceeded) {
       conversation.recentMsgs.shift();
-      conversation.recentMsgs.push(newMessage);
     }
+
+    conversation.recentMsgs.push(messageData);
+
     await conversation.save();
     return newMessage.save();
   }

@@ -29,25 +29,26 @@ export class AuthController {
     private usersService: UsersService,
   ) {}
 
-  @HttpCode(HttpStatus.OK)
   @Post('login')
-  signIn(@Body() signInDto: Record<string, any>) {
-    return this.authService.signIn(signInDto.username, signInDto.password);
+  async signIn(@Body() signInDto: Record<string, any>, @Res() res: Response) {
+    const { accessToken, refreshToken } = await this.authService.signIn(
+      signInDto.username,
+      signInDto.password,
+    );
+    res.cookie('refreshToken', refreshToken, tokenConfig);
+
+    return res.status(HttpStatus.OK).json({ success: true, accessToken });
   }
 
   @HttpCode(HttpStatus.CREATED)
   @Post('register')
   async registerUser(@Body() userData: UserDTO, @Res() res: Response) {
-    const {
-      accessToken,
-      refreshToken,
-      userData: data,
-    } = await this.authService.signUp(userData);
+    const { accessToken, refreshToken } =
+      await this.authService.signUp(userData);
 
-    res.cookie('accessToken', accessToken, tokenConfig);
     res.cookie('refreshToken', refreshToken, tokenConfig);
 
-    return res.send(data);
+    return res.status(HttpStatus.CREATED).json({ success: true, accessToken });
   }
 
   @UseGuards(AuthGuard)
@@ -59,7 +60,7 @@ export class AuthController {
     await this.authService.signOut(refreshToken);
   }
 
-  @Post('refresh-token')
+  @Post('/refresh-token')
   async refreshTokens(@Req() req: Request, @Res() res: Response) {
     const refresh_token = req.cookies.refreshToken;
 

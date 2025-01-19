@@ -1,6 +1,7 @@
 export interface MessageDTO {
+  _id: string;
   content: string;
-  sender: string;
+  senderId: string;
   conversationId: string;
   createdAt: Date;
 }

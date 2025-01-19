@@ -7,7 +7,7 @@ export class Message extends Document {
   content: string;
 
   @Prop({ required: true })
-  sender: string;
+  senderId: string;
 
   @Prop({ required: true })
   conversationId: string;
